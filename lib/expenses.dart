@@ -1,3 +1,4 @@
+import 'package:expense_tracker/widgets/category_bars.dart';
 import 'package:expense_tracker/widgets/expenses_list.dart';
 import 'package:expense_tracker/widgets/new_expense.dart';
 import 'package:flutter/material.dart';
@@ -15,6 +16,46 @@ class Expenses extends StatefulWidget {
 
 class _ExpensesState extends State<Expenses> {
   final List<Expense> _expenses = [
+    Expense(
+        title: 'Pizza',
+        amount: 20,
+        date: DateTime.now(),
+        category: Category.travel),
+    Expense(
+        title: 'Pizza',
+        amount: 20,
+        date: DateTime.now(),
+        category: Category.food),
+    Expense(
+        title: 'Pizza',
+        amount: 20,
+        date: DateTime.now(),
+        category: Category.food),
+    Expense(
+        title: 'Pizza',
+        amount: 20,
+        date: DateTime.now(),
+        category: Category.travel),
+    Expense(
+        title: 'Pizza',
+        amount: 20,
+        date: DateTime.now(),
+        category: Category.food),
+    Expense(
+        title: 'Pizza',
+        amount: 20,
+        date: DateTime.now(),
+        category: Category.leisure),
+    Expense(
+        title: 'Pizza',
+        amount: 20,
+        date: DateTime.now(),
+        category: Category.work),
+    Expense(
+        title: 'Cinema',
+        amount: 10,
+        date: DateTime.now().subtract(const Duration(days: 10)),
+        category: Category.leisure),
     Expense(
         title: 'Pizza',
         amount: 20,
@@ -61,6 +102,7 @@ class _ExpensesState extends State<Expenses> {
         ? const Center(child: Text('No Expences here. Start addin some!'))
         : ExpensesList(_expenses, _onDismiss);
 
+    var h = 200.0;
     return Scaffold(
       appBar: AppBar(
         actions: [
@@ -69,7 +111,16 @@ class _ExpensesState extends State<Expenses> {
         ],
       ),
       body: Column(
-          children: [const Text('Expenses'), Expanded(child: mainContent)]),
+        children: [
+          Text('Expenses: (${_expenses.length})'),
+          SizedBox(
+            width: double.infinity,
+            height: h,
+            child: BarPlot(buckets: ExpensesBucket.inBuckets(_expenses), parentHeight: h),
+          ),
+          Expanded(child: mainContent)
+        ],
+      ),
     );
   }
 
@@ -87,5 +138,7 @@ class _ExpensesState extends State<Expenses> {
     );
   }
 
-  void _validate(Expense expense) {}
+  void _validate(Expense expense) {
+    //   todo
+  }
 }
