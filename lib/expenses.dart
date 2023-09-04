@@ -14,50 +14,78 @@ class Expenses extends StatefulWidget {
 }
 
 class _ExpensesState extends State<Expenses> {
-
   final List<Expense> _expenses = [
     Expense(
         title: 'Pizza',
-        amount: 15,
+        amount: 20,
         date: DateTime.now(),
         category: Category.food),
     Expense(
         title: 'Cinema',
-        amount: 20,
-        date: DateTime.now(),
-        category: Category.leisure),
-    Expense(
-        title: 'Cinema',
-        amount: 20,
-        date: DateTime.now(),
-        category: Category.travel),
-    Expense(
-        title: 'Cinema',
-        amount: 20,
-        date: DateTime.now(),
-        category: Category.work),
+        amount: 10,
+        date: DateTime.now().subtract(const Duration(days: 10)),
+        category: Category.food),
   ];
+  final List<Expense> _expensesTrash = [];
+
+  void _onSave(Expense expense) {
+    _validate(expense);
+    setState(() {
+      _expenses.add(expense);
+    });
+    Navigator.pop(context);
+  }
+
+  void _onDismiss(Expense expense) {
+    int removedI = _expenses.indexOf(expense);
+    setState(() {
+      _expenses.remove(expense);
+      _expensesTrash.add(expense);
+    });
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Center(child: Text('${expense.title} deleted')),
+      action: SnackBarAction(
+        label: 'Undo',
+        onPressed: () {
+          setState(() {
+            _expenses.insert(removedI, expense);
+          });
+        },
+      ),
+    ));
+  }
 
   @override
   Widget build(BuildContext context) {
+    var mainContent = _expenses.isEmpty
+        ? const Center(child: Text('No Expences here. Start addin some!'))
+        : ExpensesList(_expenses, _onDismiss);
+
     return Scaffold(
       appBar: AppBar(
         actions: [
-          IconButton(onPressed: _openAddExpenseOverlay, icon: const Icon(Icons.add))
+          IconButton(
+              onPressed: _openAddExpenseOverlay, icon: const Icon(Icons.add))
         ],
       ),
       body: Column(
-          children: [const Text('Expenses'), Expanded(child: ExpensesList(_expenses))]),
+          children: [const Text('Expenses'), Expanded(child: mainContent)]),
     );
   }
 
   void _openAddExpenseOverlay() {
     showModalBottomSheet(
-        context: context,
-        builder: (ctx) {
-          return NewExpense();
-        },
+      isScrollControlled: true,
+      constraints: BoxConstraints(
+        minHeight: MediaQuery.of(context).size.height * 0.77,
+        maxHeight: MediaQuery.of(context).size.height * 0.77,
+      ),
+      context: context,
+      builder: (ctx) {
+        return NewExpense(_onSave);
+      },
     );
   }
-}
 
+  void _validate(Expense expense) {}
+}

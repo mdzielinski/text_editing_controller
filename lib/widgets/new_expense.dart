@@ -6,7 +6,9 @@ import '../models/expense.dart';
 final formatter = DateFormat.yMd();
 
 class NewExpense extends StatefulWidget {
-  const NewExpense({super.key});
+  const NewExpense(this.save, {super.key});
+
+  final void Function(Expense expense) save;
 
   @override
   State<NewExpense> createState() => _State();
@@ -14,13 +16,16 @@ class NewExpense extends StatefulWidget {
 
 class _State extends State<NewExpense> {
   DateTime _date = DateTime.now();
-  final TextEditingController _name = TextEditingController();
-  final TextEditingController _price = TextEditingController();
+  final TextEditingController _title = TextEditingController();
+  bool _titleValEnabled = false;
+  final TextEditingController _amount = TextEditingController();
+  bool _amountValEnabled = false;
+  Category _category = Category.leisure;
 
   @override
   void dispose() {
-    _name.dispose();
-    _price.dispose();
+    _title.dispose();
+    _amount.dispose();
     super.dispose();
   }
 
@@ -28,54 +33,72 @@ class _State extends State<NewExpense> {
   Widget build(BuildContext context) {
     double spacing = 15;
     return Padding(
-      padding: EdgeInsets.all(16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         children: [
-          TextField(
-            controller: _name,
+          TextFormField(
+            controller: _title,
             textAlign: TextAlign.right,
             maxLength: 50,
-            decoration: const InputDecoration(hintText: 'expense name'),
+            onEditingComplete: () {
+              _titleValEnabled = true;
+              FocusScope.of(context).unfocus();
+            },
+            decoration: InputDecoration(
+                errorText: (_titleValEnabled == true &&
+                        _title.value.text.trim().isEmpty)
+                    ? "Input title"
+                    : null,
+                hintText: 'Title',
+                prefixText: '\$ '),
           ),
           Row(
             children: [
               Expanded(
                 child: IntrinsicHeight(
                   child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.end,
                     children: [
-                      SizedBox(
-                        width: 200,
-                        height: 300,
-                        child: DropdownButton(
-                            items: Category.values
-                                .map((e) => DropdownMenuItem(
-                                    child: Text(e.name.toString())))
-                                .toList(),
-                            onChanged: (value) {}),
-                      ),
+                      DropdownButton(
+                          value: _category,
+                          items: Category.values
+                              .map((c) => DropdownMenuItem(
+                                  value: c, child: Text(c.name.toUpperCase())))
+                              .toList(),
+                          onChanged: (value) {
+                            if (value == null) return;
+                            setState(() {
+                              _category = value;
+                            });
+                          }),
+                      verticalLine(spacing, context),
                       Expanded(
                         child: TextField(
-                          controller: _price,
+                          controller: _amount,
                           textAlign: TextAlign.right,
                           keyboardType: TextInputType.number,
-                          decoration: const InputDecoration(
-                              hintText: '\$ amount', prefixText: '\$ '),
+                          onEditingComplete: () {
+                            _amountValEnabled = true;
+                            FocusScope.of(context).unfocus();
+                          },
+                          decoration: InputDecoration(
+                              errorText: (_amountValEnabled == true &&
+                                      double.tryParse(_amount.text) == null)
+                                  ? "Input number"
+                                  : null,
+                              hintText: 'Amount',
+                              prefixText: '\$ '),
                         ),
                       ),
                       SizedBox(
                         width: spacing,
                       ),
-                      VerticalDivider(
-                          width: spacing,
-                          indent: 2,
-                          thickness: 1,
-                          endIndent: 2,
-                          color: Theme.of(context).colorScheme.secondary),
+                      verticalLine(spacing, context),
                       Row(
                         children: [
                           IconButton(
                             onPressed: _select,
-                            icon: Icon(Icons.edit_calendar),
+                            icon: const Icon(Icons.edit_calendar),
                           ),
                           Text(formatter.format(_date)),
                         ],
@@ -86,18 +109,16 @@ class _State extends State<NewExpense> {
               ),
             ],
           ),
+          const SizedBox(height: 20),
           Row(
             children: [
               ElevatedButton(
                 onPressed: () => {Navigator.pop(context)},
                 child: const Text('Cancel'),
               ),
-              Spacer(),
+              const Spacer(),
               ElevatedButton(
-                onPressed: () {
-                  print('name: ${_name.text}\n'
-                      '\$: ${_price.text}');
-                },
+                onPressed: _submitExpenseData,
                 child: const Text('Save'),
               ),
             ],
@@ -107,15 +128,34 @@ class _State extends State<NewExpense> {
     );
   }
 
+  VerticalDivider verticalLine(double spacing, BuildContext context) {
+    return VerticalDivider(
+        width: spacing,
+        indent: 2,
+        thickness: 1,
+        endIndent: 2,
+        color: Theme.of(context).colorScheme.secondary);
+  }
+
   void _select() async {
     final now = DateTime.now();
     final selected = await showDatePicker(
         context: context,
-        initialDate: _date.subtract(Duration(days: 1)),
-        firstDate: _date.subtract(Duration(days: 30)),
+        initialDate: _date.subtract(const Duration(days: 1)),
+        firstDate: _date.subtract(const Duration(days: 30)),
         lastDate: now);
     setState(() {
       _date = selected ?? now;
     });
+  }
+
+  void _submitExpenseData() {
+    widget.save(Expense(
+        title: _title.value.text,
+        amount: double.parse(_amount.text),
+        date: _date,
+        category: _category));
+    FocusScope.of(context).unfocus();
+    FocusScope.of(context).unfocus();
   }
 }
